@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  db:
+    image: postgres:16-alpine
+    container_name: smart_grid_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: smartgrid
+      POSTGRES_PASSWORD: smartgrid_secure_password
+      POSTGRES_DB: smart_grid_ems
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smartgrid -d smart_grid_ems"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI REST Backend Service
+  backend:
+    build: .
+    container_name: smart_grid_backend
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://smartgrid:smartgrid_secure_password@db:5432/smart_grid_ems
+      SECRET_KEY: smart-grid-ems-super-secure-production-secret-key-change-me
+      DEBUG: "False"
+    ports:
+      - "8000:8000"
+
+  # Streamlit Interactive Analytical Dashboard
+  dashboard:
+    build: .
+    container_name: smart_grid_dashboard
+    restart: unless-stopped
+    command: streamlit run dashboard/app.py --server.port=8501 --server.address=0.0.0.0
+    depends_on:
+      - backend
+    environment:
+      API_BASE_URL: http://backend:8000/api/v1
+    ports:
+      - "8501:8501"
+
+volumes:
+  postgres_data:

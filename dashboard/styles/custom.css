@@ -1,0 +1,817 @@
+/* ==========================================================================
+   SMARTGRID BHARAT EMS — INDUSTRIAL DESIGN SYSTEM
+   High-Precision Power Systems Monitoring & Dispatch Architecture
+   Aesthetic: Refined Enterprise Industrial / SCADA-grade Dark Theme
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    /* Foundation Colors (Refined Dark Charcoal & Navy) */
+    --canvas-bg: #0A0E17;
+    --surface-base: #101726;
+    --surface-raised: #151F32;
+    --surface-hover: #1C2A44;
+    --surface-accent: #132238;
+
+    /* Structural Borders (Restrained, subtle, non-distracting) */
+    --border-subtle: rgba(255, 255, 255, 0.07);
+    --border-default: rgba(255, 255, 255, 0.12);
+    --border-focus: #10B981;
+    --border-strong: rgba(255, 255, 255, 0.22);
+
+    /* Text & Legibility Hierarchy */
+    --text-primary: #F0F4F8;
+    --text-secondary: #94A3B8;
+    --text-muted: #64748B;
+    --text-tertiary: #475569;
+
+    /* Functional Domain Colors (Restrained, high contrast, industrial) */
+    --color-solar: #D97706;
+    --color-solar-bright: #F59E0B;
+    --color-solar-dim: rgba(217, 119, 6, 0.12);
+
+    --color-battery: #059669;
+    --color-battery-bright: #10B981;
+    --color-battery-dim: rgba(5, 150, 105, 0.12);
+
+    --color-load: #0284C7;
+    --color-load-bright: #38BDF8;
+    --color-load-dim: rgba(2, 132, 199, 0.12);
+
+    --color-grid: #E11D48;
+    --color-grid-bright: #F43F5E;
+    --color-grid-dim: rgba(225, 29, 72, 0.12);
+
+    --color-optimal: #10B981;
+    --color-optimal-dim: rgba(16, 185, 129, 0.10);
+
+    /* Geometry Scale (Engineered, disciplined) */
+    --radius-xs: 2px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+}
+
+/* ==========================================================================
+   Non-Obstructive Streamlit Header & Sidebar Toggle
+   ========================================================================== */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    height: 3.5rem !important;
+    min-height: 3.5rem !important;
+    border: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+    z-index: 100000 !important;
+}
+
+header[data-testid="stHeader"] > * {
+    pointer-events: auto !important;
+}
+
+div[data-testid="stToolbar"],
+div[data-testid="stDecoration"],
+#MainMenu,
+footer {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+/* Ensure sidebar toggle button is ALWAYS prominent, visible, and clickable */
+header[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapsedControl"],
+header[data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+header[data-testid="stHeader"] button[aria-label*="sidebar" i],
+header[data-testid="stHeader"] button[title*="sidebar" i] {
+    display: flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    position: fixed !important;
+    top: 10px !important;
+    left: 12px !important;
+    z-index: 999999 !important;
+    background: #151F32 !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.15s ease !important;
+}
+
+[data-testid="stSidebarCollapsedControl"]:hover,
+[data-testid="stSidebarCollapseButton"]:hover {
+    background: #1C2A44 !important;
+    border-color: #10B981 !important;
+}
+
+[data-testid="stSidebarCollapsedControl"] button,
+[data-testid="stSidebarCollapseButton"] button {
+    background: transparent !important;
+    color: #F0F4F8 !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+[data-testid="stSidebarCollapsedControl"] svg,
+[data-testid="stSidebarCollapseButton"] svg {
+    fill: #F0F4F8 !important;
+    stroke: #F0F4F8 !important;
+}
+
+/* ==========================================================================
+   Quick Navigation Bar (st.page_link buttons)
+   ========================================================================== */
+div[data-testid="stPageLink-NavLink"] {
+    background: var(--surface-base) !important;
+    border: 1px solid var(--border-default) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 5px 8px !important;
+    text-decoration: none !important;
+    color: var(--text-secondary) !important;
+    font-size: 0.74rem !important;
+    font-weight: 500 !important;
+    transition: all 0.15s ease !important;
+    justify-content: center !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    box-shadow: none !important;
+}
+
+div[data-testid="stPageLink-NavLink"]:hover {
+    background: var(--surface-hover) !important;
+    border-color: var(--border-strong) !important;
+    color: #FFFFFF !important;
+}
+
+div[data-testid="stPageLink-NavLink"][aria-current="page"] {
+    background: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.5) !important;
+    color: #34D399 !important;
+    font-weight: 600 !important;
+}
+
+.stApp {
+    background-color: var(--canvas-bg) !important;
+    background-image: none !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    color: var(--text-primary) !important;
+    line-height: 1.5;
+}
+
+/* Canvas Viewport Margins - breathe comfortably below transparent header */
+.block-container {
+    padding-top: 3.25rem !important;
+    padding-bottom: 2.5rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1440px !important;
+}
+
+/* Precision Scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: var(--canvas-bg);
+}
+::-webkit-scrollbar-thumb {
+    background: #1E293B;
+    border-radius: var(--radius-xs);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* ==========================================================================
+   Header & Application Masthead (Compact, non-blocking)
+   ========================================================================== */
+.ems-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ems-header-title {
+    font-size: 1.20rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    letter-spacing: -0.02em;
+    margin: 0 0 2px 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
+}
+
+.ems-header-subtitle {
+    font-size: 0.8125rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+    line-height: 1.4;
+    max-width: 820px;
+}
+
+.ems-status-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ems-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    font-size: 0.6875rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    letter-spacing: 0.01em;
+}
+
+.ems-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.ems-dot-active { background-color: var(--color-battery-bright); }
+.ems-dot-warn { background-color: var(--color-solar-bright); }
+.ems-dot-info { background-color: var(--color-load-bright); }
+.ems-dot-muted { background-color: var(--text-muted); }
+
+/* ==========================================================================
+   Section Dividers & Micro-Headers
+   ========================================================================== */
+.ems-section {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 8px;
+    gap: 12px;
+}
+
+.ems-section-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ems-section-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin: 0;
+    line-height: 1.35;
+}
+
+/* ==========================================================================
+   Industrial Metric / Telemetry Cards
+   ========================================================================== */
+.ems-kpi-card {
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+    min-height: 92px;
+}
+
+.ems-kpi-card:hover {
+    border-color: var(--border-default);
+}
+
+.ems-kpi-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ems-kpi-value {
+    font-size: 1.45rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.ems-kpi-footer {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    flex-wrap: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ems-kpi-delta {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.70rem;
+    white-space: nowrap;
+}
+
+.ems-delta-pos { color: var(--color-battery-bright); }
+.ems-delta-neg { color: var(--color-grid-bright); }
+.ems-delta-neutral { color: var(--text-secondary); }
+
+/* ==========================================================================
+   Horizontal Strip Telemetry Ribbon (Non-card layout)
+   ========================================================================== */
+.ems-stat-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.ems-stat-item {
+    padding: 12px 16px;
+    border-right: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.ems-stat-item:last-child {
+    border-right: none;
+}
+
+.ems-stat-label {
+    font-size: 0.70rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 3px;
+}
+
+.ems-stat-val {
+    font-size: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.ems-stat-sub {
+    font-size: 0.70rem;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* ==========================================================================
+   Strategy Benchmarking Cards (Hero Comparison for Analytics Page)
+   ========================================================================== */
+.strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.strategy-card {
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: border-color 0.15s ease;
+}
+
+.strategy-card:hover {
+    border-color: var(--border-default);
+}
+
+.strategy-card-highlight {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.03) 0%, var(--surface-base) 100%);
+}
+
+.strategy-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.strategy-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.strategy-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 1.5px 6px;
+    border-radius: var(--radius-xs);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.strategy-tag-base {
+    background: rgba(225, 29, 72, 0.12);
+    color: #FB7185;
+    border: 1px solid rgba(225, 29, 72, 0.25);
+}
+
+.strategy-tag-heuristic {
+    background: rgba(217, 119, 6, 0.12);
+    color: #FBBF24;
+    border: 1px solid rgba(217, 119, 6, 0.25);
+}
+
+.strategy-tag-optimal {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.strategy-cost-block {
+    margin-bottom: 12px;
+}
+
+.strategy-cost-label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 2px;
+}
+
+.strategy-cost-figure {
+    font-size: 1.75rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.strategy-savings-block {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface-raised);
+    border-radius: var(--radius-xs);
+    font-size: 0.75rem;
+    margin-bottom: 12px;
+    border-left: 3px solid var(--text-muted);
+}
+
+.strategy-savings-optimal {
+    border-left-color: var(--color-battery-bright);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.strategy-savings-heuristic {
+    border-left-color: var(--color-solar-bright);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.strategy-savings-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.strategy-specs-table {
+    width: 100%;
+    margin-top: auto;
+    font-size: 0.72rem;
+    border-collapse: collapse;
+}
+
+.strategy-specs-table tr {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.strategy-specs-table td {
+    padding: 5px 0;
+    color: var(--text-secondary);
+}
+
+.strategy-specs-table td.spec-val {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Engineering Panels & SCADA Topology Container
+   ========================================================================== */
+.ems-panel {
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 14px;
+}
+
+.ems-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.ems-panel-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.ems-topology-wrapper {
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Tabular Data Presentation (Engineering Matrix)
+   ========================================================================== */
+.ems-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    color: var(--text-primary);
+}
+
+.ems-table th {
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-default);
+    text-transform: uppercase;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.ems-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    vertical-align: middle;
+}
+
+.ems-table tr:hover td {
+    background-color: var(--surface-hover);
+    color: var(--text-primary);
+}
+
+.ems-table td.value-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   Streamlit Sidebar Refinements
+   ========================================================================== */
+section[data-testid="stSidebar"] {
+    background-color: #0B0F19 !important;
+    border-right: 1px solid var(--border-subtle) !important;
+}
+
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 1rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+section[data-testid="stSidebar"] label {
+    font-size: 0.70rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    color: var(--text-secondary) !important;
+    text-transform: uppercase !important;
+    margin-bottom: 2px !important;
+}
+
+section[data-testid="stSidebar"] .stSelectbox,
+section[data-testid="stSidebar"] .stSlider {
+    margin-bottom: 10px !important;
+}
+
+.sidebar-brand-lockup {
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.sidebar-brand-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-brand-sub {
+    font-size: 0.70rem;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
+.sidebar-status-pill {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 7px;
+    border-radius: var(--radius-xs);
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6875rem;
+    color: #34D399;
+}
+
+.sidebar-section-divider {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 16px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* ==========================================================================
+   Streamlit Native Component Overrides (Clean, dark-mode native styling)
+   ========================================================================== */
+.stButton > button {
+    background: var(--surface-raised) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-default) !important;
+    border-radius: var(--radius-sm) !important;
+    font-weight: 500 !important;
+    font-size: 0.80rem !important;
+    padding: 5px 12px !important;
+    box-shadow: none !important;
+    transition: all 0.15s ease !important;
+}
+
+.stButton > button:hover {
+    background: var(--surface-hover) !important;
+    border-color: var(--border-strong) !important;
+    color: #FFFFFF !important;
+}
+
+.stButton > button:active {
+    background: var(--surface-base) !important;
+}
+
+.stSelectbox div[data-baseweb="select"] > div {
+    background-color: var(--surface-base) !important;
+    border-color: var(--border-default) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    font-size: 0.8125rem !important;
+}
+
+.stSlider [data-baseweb="slider"] {
+    margin-top: 2px !important;
+}
+
+div[data-testid="stDataFrame"] {
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-sm) !important;
+    background: var(--surface-base) !important;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    gap: 2px;
+    background-color: var(--surface-base);
+    padding: 2px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: var(--radius-xs);
+    padding: 5px 10px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.78rem;
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: var(--surface-raised) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle) !important;
+}
+
+code, pre {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.78rem !important;
+}
+
+/* ==========================================================================
+   Responsive Adaptations (Desktop, Laptop, Tablet, Mobile)
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .strategy-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .ems-stat-strip {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    .ems-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .strategy-grid {
+        grid-template-columns: 1fr;
+    }
+    .ems-stat-strip {
+        grid-template-columns: 1fr;
+    }
+    .ems-stat-item {
+        border-right: none;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    .ems-stat-item:last-child {
+        border-bottom: none;
+    }
+    .strategy-cost-figure {
+        font-size: 1.45rem;
+    }
+}
