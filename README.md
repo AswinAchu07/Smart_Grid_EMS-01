@@ -4,8 +4,9 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.32%2B-FF4B4B.svg?logo=streamlit)](https://streamlit.io/)
 [![XGBoost](https://img.shields.io/badge/XGBoost-2.0%2B-EB5424.svg)](https://xgboost.readthedocs.io/)
-[![Tests](https://img.shields.io/badge/Tests-38%20Passed-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-54%20Passed-brightgreen.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 A Python-first **B.Tech Final-Year Capstone Project** in Smart Grid, Solar PV Generation, Battery Energy Storage Systems (BESS), Machine Learning Forecasting, and Mixed-Integer Linear Programming (MILP) Optimal Energy Dispatch.
 
@@ -62,31 +63,45 @@ graph TD
    - Strict chronological train/validation/test splits preventing future data leakage.
    - Evaluation metrics: MAE, RMSE, MAPE (with \(\epsilon = 0.05\text{ kW}\) handling), sMAPE, and \(R^2\).
 
-3. **Physics-Based Battery Storage Model**:
-   - Dynamic State of Charge (SOC) tracking strictly bounded within safe hardware limits (\(15\% \le SOC \le 95\%\)).
-   - Sub-efficiency losses: \(95\%\) charge efficiency and \(95\%\) discharge efficiency (\(\approx 90.25\%\) roundtrip).
-   - Enforces physical power ratings (\(5.0\text{ kW}\) max charge/discharge) and forbids simultaneous charging and discharging.
+3. **Physics-Informed Battery Degradation & SOH Life Model (ASTM E1049-85)**:
+   - Full **ASTM E1049-85 Rainflow Cycle Counting** algorithm decomposing irregular microgrid charge/discharge trajectories into stress reversals.
+   - **Wöhler S-N fatigue curve** ($N = a \cdot \text{DOD}^{-b}$) modeling depth-of-discharge electrode mechanical cracking.
+   - **Arrhenius chemical calendar aging** incorporating operating ambient temperature (15°C - 48°C) and average SOC stress.
+   - State of Health (SOH) tracking, Equivalent Full Cycles (EFC), Remaining Useful Life (RUL in years) projection, and economic cell replacement cost estimation.
 
-4. **Energy Management Systems (EMS)**:
+4. **Live Global Weather & Real-Time Solar PV API (Open-Meteo Integration)**:
+   - Zero-configuration live numerical weather prediction querying Open-Meteo across global benchmark cities (New Delhi, Bengaluru, Mumbai, Chennai, Berlin, San Francisco, Tokyo, Sydney, London, Cairo).
+   - Physics-derived PV conversion formula factoring in Global Horizontal Irradiance (GHI), cell temperature thermal derating ($\gamma \approx 0.004/^\circ\text{C}$), and inverter efficiency.
+
+5. **Explainable AI (XAI) with SHAP Values**:
+   - `shap.TreeExplainer` attribution quantifying global predictor importance weights (Mean $|SHAP|$) and local single-hour waterfall decompositions.
+   - Transparent interpretability explaining *why* solar/load forecasts increase or decrease at any given hour.
+
+6. **Probabilistic / Quantile Forecasting (P10, P50, P90 Bands)**:
+   - Quantile prediction envelopes ($P_{10}$ conservative floor, $P_{50}$ median expectation, $P_{90}$ optimistic ceiling) quantifying cloud transient risk and peak demand surges.
+   - Enforces physical zero-night clamps and monotonic sorting ($0 \le P_{10} \le P_{50} \le P_{90}$).
+
+7. **Energy Management Systems (EMS)**:
    - **Rule-Based Heuristic EMS (Baseline)**: Prioritizes direct solar self-consumption, surplus battery charging, and grid backup.
    - **Optimization EMS (Proposed MILP System)**: Mixed-Integer Linear Programming formulation via PuLP minimizing electricity import cost and battery degradation under TOU tariffs.
    - **Strict Physical Power Conservation**: Verifies \(\text{Sources} = \text{Sinks}\) with error \(< 10^{-5}\text{ kW}\) at every single timestep.
 
-5. **FastAPI RESTful Backend**:
+8. **FastAPI RESTful Backend**:
    - Production-grade async API with OpenAPI 3.0 interactive documentation (`/docs`, `/redoc`).
    - JWT token authentication with Role-Based Access Control (`ADMIN`, `RESEARCHER`, `VIEWER`).
    - Dual-mode database layer: Zero-setup SQLite locally with automatic fallback or PostgreSQL in production.
 
-6. **Interactive Streamlit Analytical Dashboard**:
+9. **Interactive Streamlit Analytical Dashboard**:
    - **Page 1: Overview**: System architecture, key specifications, and summary KPIs.
-   - **Page 2: Solar Forecast**: Model comparison, horizon slider, and error metrics.
-   - **Page 3: Load Forecast**: Diurnal demand curves, actuals vs predictions.
-   - **Page 4: Battery Status**: Real-time SOC gauge, usable energy, and cycle count.
+   - **Page 2: Solar Forecast**: Model comparison, horizon slider, error metrics, P10-P90 quantile ribbon, SHAP explainability, and live Open-Meteo global weather feed.
+   - **Page 3: Load Forecast**: Diurnal demand curves, actuals vs predictions, P10-P90 quantile bands, and SHAP feature attributions.
+   - **Page 4: Battery Status**: Real-time SOC gauge, usable energy, ASTM Rainflow cycle counts, SOH retention gauge, and temperature-dependent RUL simulator.
    - **Page 5: Energy Flow**: Stacked area balance chart, Sankey flow diagram, and interactive dispatch calculator.
    - **Page 6: Optimization EMS**: 24-hour day-ahead TOU tariff arbitrage schedule.
-   - **Page 7: Benchmark Analytics**: Multi-strategy comparison table, financial savings, peak shaving, and CSV report export.
+   - **Page 7: Benchmark Analytics**: Multi-strategy comparison table, financial savings, peak shaving, CO₂ carbon offsets, battery asset longevity, and CSV report export.
 
 ---
+
 
 ## 🚀 Quickstart Guide
 

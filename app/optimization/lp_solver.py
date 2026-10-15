@@ -4,40 +4,26 @@
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 import numpy as np
-import importlib
+import warnings
 import pulp
 
 from app.battery.model import Battery
 from app.ems.rule_based import RuleBasedEMS, EMSDispatchDecision
 
-# If the running process loaded an incompatible PuLP version before downgrade, dynamically reload 2.9.0
-if not hasattr(pulp.LpVariable, "dicts") or getattr(pulp, "__version__", "").startswith("4."):
-    try:
-        pulp = importlib.reload(pulp)
-    except Exception:
-        pass
-
 
 def _create_lp_dict(name: str, indices, lowBound=None, upBound=None, cat=None):
-    """Safely create indexed LpVariable dictionary across any PuLP version."""
-    if hasattr(pulp.LpVariable, "dicts"):
-        kwargs = {}
-        if lowBound is not None:
-            kwargs["lowBound"] = lowBound
-        if upBound is not None:
-            kwargs["upBound"] = upBound
-        if cat is not None:
-            kwargs["cat"] = cat
-        return pulp.LpVariable.dicts(name, indices, **kwargs)
+    """Safely create indexed LpVariable dictionary avoiding deprecated helper methods."""
+    cat_type = cat or pulp.LpContinuous
     return {
         i: pulp.LpVariable(
             f"{name}_{i}",
             lowBound=lowBound,
             upBound=upBound,
-            cat=cat or pulp.LpContinuous,
+            cat=cat_type,
         )
         for i in indices
     }
+
 
 
 @dataclass
@@ -149,9 +135,12 @@ class OptimizationEMS:
             model += (soc[t] == prev_soc + delta_soc, f"SOC_Dynamics_{t}")
 
         # 5. Solve MILP
-        solver = pulp.PULP_CBC_CMD(msg=False, timeLimit=15)
-        model.solve(solver)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            solver = pulp.PULP_CBC_CMD(msg=False, timeLimit=15)
+            model.solve(solver)
         status_str = pulp.LpStatus[model.status]
+
 
         # 6. Process Output / Fallback
         if status_str in ["Optimal", "Feasible"]:

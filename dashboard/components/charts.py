@@ -599,3 +599,316 @@ def plot_roi_payback_curve(years: int, pv_kw: float, bat_kwh: float, annual_savi
 
     fig.update_layout(**layout)
     return fig
+
+
+def plot_quantile_forecast_chart(
+    df: pd.DataFrame,
+    title: str,
+    target_name: str = "Solar Power",
+    y_label: str = "Power (kW)",
+    theme_color: str = "#F59E0B",
+) -> go.Figure:
+    """Probabilistic confidence ribbon chart displaying P10 (floor), P50 (median), P90 (ceiling), and actuals."""
+    fig = go.Figure()
+    x_axis = df["timestamp"] if "timestamp" in df.columns else (df["step"] if "step" in df.columns else df.index)
+
+    # 1. P90 Upper Bound (Transparent line for fill basis)
+    if "p90" in df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=x_axis,
+                y=df["p90"],
+                mode="lines",
+                line=dict(width=0),
+                showlegend=False,
+                hoverinfo="skip",
+                name="P90 (Upper 90%)",
+            )
+        )
+
+    # 2. P10 Lower Bound with translucent shaded ribbon fill to P90
+    if "p10" in df.columns:
+        fill_color = "rgba(245, 158, 11, 0.18)" if theme_color == "#F59E0B" else "rgba(56, 189, 248, 0.18)"
+        fig.add_trace(
+            go.Scatter(
+                x=x_axis,
+                y=df["p10"],
+                mode="lines",
+                line=dict(width=0),
+                fill="tonexty",
+                fillcolor=fill_color,
+                name="80% Confidence Band (P10 - P90)",
+                hovertemplate="P10 Floor: %{y:.2f} kW<extra></extra>",
+            )
+        )
+
+    # 3. P50 Median Forecast Line
+    p50_col = "p50" if "p50" in df.columns else "predicted"
+    if p50_col in df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=x_axis,
+                y=df[p50_col],
+                mode="lines",
+                name="P50 Median Forecast",
+                line=dict(color=theme_color, width=2.5),
+                hovertemplate="P50 Forecast: %{y:.2f} kW<extra></extra>",
+            )
+        )
+
+    # 4. Actual Observed Line
+    actual_col = "actual" if "actual" in df.columns else "actual_value"
+    if actual_col in df.columns:
+        fig.add_trace(
+            go.Scatter(
+                x=x_axis,
+                y=df[actual_col],
+                mode="lines",
+                name="Actual Ground Truth",
+                line=dict(color="#10B981", width=2, dash="dot"),
+                hovertemplate="Actual: %{y:.2f} kW<extra></extra>",
+            )
+        )
+
+    layout = {**INDUSTRIAL_LAYOUT}
+    layout["title"] = dict(
+        text=title,
+        font=dict(size=12, color="#F0F4F8", family="Inter"),
+        x=0.01,
+        y=0.96,
+    )
+    layout["xaxis_title"] = "Timeline"
+    layout["yaxis_title"] = y_label
+    layout["margin"] = dict(l=55, r=25, t=45, b=35)
+    layout["legend"] = dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1,
+        bgcolor="rgba(16, 23, 38, 0.8)",
+    )
+
+    fig.update_layout(**layout)
+    return fig
+
+
+def plot_shap_feature_importance(
+    features_list: List[Dict[str, Any]],
+    title: str = "SHAP Global Feature Importance (Mean |SHAP Value|)",
+) -> go.Figure:
+    """Horizontal bar chart ranking features by global SHAP impact."""
+    df_shap = pd.DataFrame(features_list)
+    if df_shap.empty or "feature" not in df_shap.columns or "importance" not in df_shap.columns:
+        return go.Figure()
+
+    df_shap = df_shap.sort_values(by="importance", ascending=True)
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=df_shap["importance"],
+            y=df_shap["feature"],
+            orientation="h",
+            marker=dict(
+                color=df_shap["importance"],
+                colorscale="Viridis",
+                showscale=False,
+            ),
+            hovertemplate="<b>%{y}</b><br>Mean |SHAP|: %{x:.4f} kW<extra></extra>",
+        )
+    )
+
+    layout = {**INDUSTRIAL_LAYOUT}
+    layout["title"] = dict(
+        text=title,
+        font=dict(size=12, color="#F0F4F8", family="Inter"),
+        x=0.01,
+        y=0.96,
+    )
+    layout["xaxis_title"] = "Mean Absolute SHAP Value (|ΔkW|)"
+    layout["margin"] = dict(l=140, r=25, t=45, b=35)
+
+    fig.update_layout(**layout)
+    return fig
+
+
+def plot_shap_local_waterfall(
+    attributions: List[Dict[str, Any]],
+    base_value: float,
+    predicted_value: float,
+    title: str = "SHAP Local Prediction Decomposition",
+) -> go.Figure:
+    """Diverging horizontal bar chart displaying directional feature impacts for a specific sample."""
+    df_loc = pd.DataFrame(attributions)
+    if df_loc.empty:
+        return go.Figure()
+
+    df_loc = df_loc.sort_values(by="shap_value", ascending=True)
+    colors = ["#10B981" if s >= 0 else "#EF4444" for s in df_loc["shap_value"]]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=df_loc["shap_value"],
+            y=[f"{row['feature']} (= {row['value']:.2f})" for _, row in df_loc.iterrows()],
+            orientation="h",
+            marker=dict(color=colors),
+            hovertemplate="<b>%{y}</b><br>Impact: %{x:+.3f} kW<extra></extra>",
+        )
+    )
+
+    layout = {**INDUSTRIAL_LAYOUT}
+    layout["title"] = dict(
+        text=f"{title} (Base: {base_value:.2f} kW → Forecast: {predicted_value:.2f} kW)",
+        font=dict(size=11, color="#F0F4F8", family="Inter"),
+        x=0.01,
+        y=0.96,
+    )
+    layout["xaxis_title"] = "SHAP Impact on Forecast (kW)"
+    layout["margin"] = dict(l=170, r=25, t=45, b=35)
+
+    fig.update_layout(**layout)
+    return fig
+
+
+def plot_battery_degradation_cycles(
+    dod_histogram: Dict[str, float],
+    title: str = "ASTM E1049-85 Rainflow Cycle Distribution",
+) -> go.Figure:
+    """Bar chart displaying Rainflow cycle counts across Depth-of-Discharge (DOD) stress bins."""
+    bins = list(dod_histogram.keys())
+    counts = list(dod_histogram.values())
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Bar(
+            x=bins,
+            y=counts,
+            marker=dict(
+                color=["#10B981", "#34D399", "#FBBF24", "#F59E0B", "#EF4444"],
+            ),
+            hovertemplate="<b>DOD Bin: %{x}</b><br>Rainflow Cycles: %{y:.1f}<extra></extra>",
+        )
+    )
+
+    layout = {**INDUSTRIAL_LAYOUT}
+    layout["title"] = dict(
+        text=title,
+        font=dict(size=12, color="#F0F4F8", family="Inter"),
+        x=0.01,
+        y=0.96,
+    )
+    layout["xaxis_title"] = "Depth of Discharge (DOD) Range"
+    layout["yaxis_title"] = "Extracted Cycles"
+    layout["margin"] = dict(l=55, r=25, t=45, b=35)
+
+    fig.update_layout(**layout)
+    return fig
+
+
+def plot_soh_retention_gauge(soh: float, rul_years: float = 15.0) -> go.Figure:
+    """Industrial radial gauge displaying battery State of Health (SOH) and Remaining Useful Life."""
+    soh_pct = float(soh * 100.0)
+
+    color = "#10B981" if soh_pct >= 90.0 else ("#F59E0B" if soh_pct >= 80.0 else "#EF4444")
+
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=soh_pct,
+            number={"suffix": "%", "font": {"size": 24, "color": color, "family": "JetBrains Mono"}},
+            title={"text": f"State of Health (SOH)<br><span style='font-size:0.7em;color:#94A3B8'>RUL: ~{rul_years:.1f} Yrs</span>", "font": {"size": 11, "color": "#CBD5E1", "family": "Inter"}},
+            gauge={
+                "axis": {"range": [60, 100], "tickwidth": 1, "tickcolor": "rgba(255,255,255,0.2)", "tickfont": {"size": 9, "color": "#94A3B8"}},
+                "bar": {"color": color, "thickness": 0.22},
+                "bgcolor": "rgba(255,255,255,0.04)",
+                "borderwidth": 1,
+                "bordercolor": "rgba(255,255,255,0.08)",
+                "steps": [
+                    {"range": [60, 80], "color": "rgba(239, 68, 68, 0.25)"},
+                    {"range": [80, 90], "color": "rgba(245, 158, 11, 0.2)"},
+                    {"range": [90, 100], "color": "rgba(16, 185, 129, 0.2)"},
+                ],
+                "threshold": {
+                    "line": {"color": "#EF4444", "width": 2},
+                    "thickness": 0.75,
+                    "value": 80.0,
+                },
+            },
+        )
+    )
+
+    layout = {**INDUSTRIAL_LAYOUT}
+    layout["margin"] = dict(l=25, r=25, t=35, b=25)
+    layout["height"] = 190
+    fig.update_layout(**layout)
+    return fig
+
+
+def plot_live_weather_solar_curve(
+    hourly_data: Dict[str, Any],
+    city_name: str = "Global Coordinates",
+) -> go.Figure:
+    """Dual-axis line chart comparing live global solar irradiance (GHI) and estimated PV generation."""
+    times = hourly_data.get("time", [])
+    ghis = hourly_data.get("ghi_w_m2", [])
+    pvs = hourly_data.get("estimated_solar_kw", [])
+    temps = hourly_data.get("temperature_c", [])
+
+    fig = go.Figure()
+
+    # Solar PV Power Line (Primary Y-axis)
+    fig.add_trace(
+        go.Scatter(
+            x=times,
+            y=pvs,
+            mode="lines",
+            name="Physical PV Generation (kW)",
+            line=dict(color="#F59E0B", width=2.5),
+            hovertemplate="%{x}<br>PV Power: <b>%{y:.2f} kW</b><extra></extra>",
+        )
+    )
+
+    # GHI Irradiance Area (Secondary Y-axis)
+    fig.add_trace(
+        go.Scatter(
+            x=times,
+            y=ghis,
+            mode="lines",
+            name="Global Irradiance (GHI W/m²)",
+            line=dict(color="#38BDF8", width=1.5, dash="dot"),
+            yaxis="y2",
+            hovertemplate="%{x}<br>GHI: <b>%{y:.1f} W/m²</b><extra></extra>",
+        )
+    )
+
+    layout = {**INDUSTRIAL_LAYOUT}
+    layout["title"] = dict(
+        text=f"Live Solar PV Feed ({city_name}) - Open-Meteo High-Resolution Model",
+        font=dict(size=12, color="#F0F4F8", family="Inter"),
+        x=0.01,
+        y=0.96,
+    )
+    layout["xaxis_title"] = "Timestamp"
+    layout["yaxis_title"] = "PV Power Output (kW)"
+    layout["yaxis2"] = dict(
+        title=dict(text="GHI Irradiance (W/m²)", font=dict(color="#38BDF8", size=10)),
+        tickfont=dict(color="#38BDF8", size=9),
+        overlaying="y",
+        side="right",
+        showgrid=False,
+    )
+    layout["margin"] = dict(l=55, r=55, t=45, b=35)
+    layout["legend"] = dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1,
+        bgcolor="rgba(16, 23, 38, 0.8)",
+    )
+
+    fig.update_layout(**layout)
+    return fig
+

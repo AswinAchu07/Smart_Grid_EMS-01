@@ -20,6 +20,9 @@ class ForecastDataPointSchema(BaseModel):
     timestamp: str
     predicted_value: float
     actual_value: Optional[float] = None
+    p10: Optional[float] = None
+    p50: Optional[float] = None
+    p90: Optional[float] = None
 
 
 class ForecastResponse(BaseModel):
@@ -33,3 +36,27 @@ class ForecastResponse(BaseModel):
 class ModelMetricsResponse(BaseModel):
     target_type: str
     models: Dict[str, Dict[str, Any]]
+
+
+class ShapGlobalImportanceItem(BaseModel):
+    feature: str
+    importance: float
+
+
+class ShapLocalAttributionItem(BaseModel):
+    feature: str
+    value: float
+    shap_value: float
+    direction: str
+
+
+class ShapExplanationResponse(BaseModel):
+    target_type: str
+    model_name: str
+    base_value: float
+    predicted_value: float
+    sample_index: int
+    global_importances: List[ShapGlobalImportanceItem]
+    local_attributions: List[ShapLocalAttributionItem]
+    has_native_shap: bool
+

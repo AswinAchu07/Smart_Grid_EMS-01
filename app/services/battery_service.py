@@ -78,3 +78,27 @@ class BatteryService:
         if user and user.role != "ADMIN":
             query = query.filter((BatteryConfig.user_id == user.id) | (BatteryConfig.user_id == None))
         return query.all()
+
+    @classmethod
+    def evaluate_degradation(
+        cls,
+        soc_trajectory: List[float],
+        capacity_kwh: float = 10.0,
+        initial_soh: float = 1.0,
+        dt_hours: float = 1.0,
+        temp_celsius: float = 25.0,
+    ) -> dict:
+        """Run ASTM E1049-85 Rainflow cycle counting and physics degradation calculation."""
+        from app.battery.degradation import BatteryDegradationModel
+
+        model = BatteryDegradationModel(
+            nominal_capacity_kwh=capacity_kwh,
+            ambient_temp_celsius=temp_celsius,
+        )
+        return model.evaluate_soc_trajectory(
+            soc_trajectory=soc_trajectory,
+            dt_hours=dt_hours,
+            initial_soh=initial_soh,
+            temp_celsius=temp_celsius,
+        )
+

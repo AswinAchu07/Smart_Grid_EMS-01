@@ -9,11 +9,12 @@ from app.core.constants import TargetType, ForecastingModelType, UserRole
 from app.db.session import get_db
 from app.db.models import User
 from app.api.deps import get_current_user_optional, require_role
-from app.schemas.forecast import ForecastResponse, ModelMetricsResponse
+from app.schemas.forecast import ForecastResponse, ModelMetricsResponse, ShapExplanationResponse
 from app.services.forecast_service import ForecastService
 
 router = APIRouter(prefix="/forecasts", tags=["Forecasting"])
 forecast_service = ForecastService()
+
 
 
 @router.post("/solar", response_model=ForecastResponse)
@@ -66,3 +67,32 @@ def get_load_model_benchmarks():
     """Retrieve comparative accuracy metrics (MAE, RMSE, MAPE, R2) across all 4 Load ML models."""
     res = forecast_service.get_all_model_benchmarks(target_type=TargetType.LOAD)
     return ModelMetricsResponse(**res)
+
+
+@router.post("/solar/explain", response_model=ShapExplanationResponse)
+def explain_solar_forecast(
+    model_type: ForecastingModelType = Query(default=ForecastingModelType.XGBOOST),
+    sample_index: int = Query(default=0, ge=0, le=99),
+):
+    """Retrieve SHAP TreeExplainer feature attributions for Solar PV forecasting model."""
+    res = forecast_service.explain_forecast(
+        target_type=TargetType.SOLAR,
+        model_type=model_type,
+        sample_index=sample_index,
+    )
+    return ShapExplanationResponse(**res)
+
+
+@router.post("/load/explain", response_model=ShapExplanationResponse)
+def explain_load_forecast(
+    model_type: ForecastingModelType = Query(default=ForecastingModelType.XGBOOST),
+    sample_index: int = Query(default=0, ge=0, le=99),
+):
+    """Retrieve SHAP TreeExplainer feature attributions for Electricity Load demand forecasting model."""
+    res = forecast_service.explain_forecast(
+        target_type=TargetType.LOAD,
+        model_type=model_type,
+        sample_index=sample_index,
+    )
+    return ShapExplanationResponse(**res)
+

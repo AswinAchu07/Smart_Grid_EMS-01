@@ -71,6 +71,20 @@ class ForecastService:
         preds = infer.predict(X_eval)
         metrics = evaluate_forecasting_metrics(y_true=actuals, y_pred=preds)
 
+        # Compute P10, P50, P90 probabilistic confidence intervals
+        from app.ml.quantile import QuantileForecaster
+        hours = eval_slice["hour"].values if "hour" in eval_slice.columns else None
+        clouds = eval_slice["cloud_cover"].values if "cloud_cover" in eval_slice.columns else None
+
+        if target_type == TargetType.SOLAR:
+            q_dict = QuantileForecaster.compute_solar_quantiles(
+                point_predictions=preds, hours=hours, cloud_cover=clouds
+            )
+        else:
+            q_dict = QuantileForecaster.compute_load_quantiles(
+                point_predictions=preds, hours=hours
+            )
+
         data_points = []
         for i in range(len(eval_slice)):
             ts_str = str(eval_slice.loc[i, "timestamp"]) if "timestamp" in eval_slice.columns else f"T+{i}"
@@ -80,12 +94,16 @@ class ForecastService:
                     timestamp=ts_str,
                     predicted_value=round(float(preds[i]), 3),
                     actual_value=round(float(actuals[i]), 3),
+                    p10=round(float(q_dict["p10"][i]), 3),
+                    p50=round(float(q_dict["p50"][i]), 3),
+                    p90=round(float(q_dict["p90"][i]), 3),
                 )
             )
 
         # Persist to database if session provided
         if db:
             run_record = ForecastRun(
+
                 user_id=user.id if user else None,
                 target_type=target_type.value,
                 model_name=model_type.value,
@@ -147,3 +165,33 @@ class ForecastService:
             "target_type": target_type.value,
             "models": benchmarks,
         }
+
+    def explain_forecast(
+        self,
+        target_type: TargetType,
+        model_type: ForecastingModelType = ForecastingModelType.XGBOOST,
+        sample_index: int = 0,
+    ) -> Dict[str, Any]:
+        """Compute SHAP global importance and local waterfall decomposition."""
+        from app.ml.explainability import ModelExplainer
+
+        self.ensure_models_trained(target_type.value)
+        target_col = "solar_power_kw" if target_type == TargetType.SOLAR else "load_power_kw"
+        train_df, val_df, test_df, feature_cols = self.pipeline.run_pipeline(
+            target_col=target_col, default_save_path=self.data_path
+        )
+        if target_type == TargetType.SOLAR:
+            infer = SolarForecastingInference(model_type=model_type.value)
+        else:
+            infer = LoadForecastingInference(model_type=model_type.value)
+
+        explanation = ModelExplainer.explain_model(
+            model=infer.model,
+            X_sample=test_df[feature_cols].iloc[:100],
+            feature_names=feature_cols,
+            local_sample_idx=sample_index,
+        )
+        explanation["target_type"] = target_type.value
+        explanation["model_name"] = model_type.value
+        return explanation
+

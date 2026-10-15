@@ -13,6 +13,8 @@ from app.schemas.battery import (
     BatteryConfigCreate,
     BatteryConfigResponse,
     BatteryStatusResponse,
+    BatteryDegradationRequest,
+    BatteryDegradationResponse,
 )
 from app.services.battery_service import BatteryService
 
@@ -42,3 +44,17 @@ def list_battery_configurations(
 ):
     """List all available battery hardware profiles."""
     return BatteryService.get_configs(db=db, user=user)
+
+
+@router.post("/degradation", response_model=BatteryDegradationResponse)
+def evaluate_battery_degradation(payload: BatteryDegradationRequest):
+    """Run ASTM E1049-85 Rainflow cycle counting, SOH fade, and remaining useful life assessment."""
+    result = BatteryService.evaluate_degradation(
+        soc_trajectory=payload.soc_trajectory,
+        capacity_kwh=payload.capacity_kwh,
+        initial_soh=payload.initial_soh,
+        dt_hours=payload.dt_hours,
+        temp_celsius=payload.temp_celsius,
+    )
+    return BatteryDegradationResponse(**result)
+

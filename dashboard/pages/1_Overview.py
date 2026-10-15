@@ -39,9 +39,12 @@ render_page_header(
     badges=[
         ("Grid: CEA 415V 50 Hz", "info"),
         ("Storage: BIS IS 16046 LiFePO4", "success"),
-        ("Dispatch: State DISCOM ToD", "warning"),
+        ("Degradation: ASTM E1049-85 Rainflow", "success"),
+        ("Weather: Live Open-Meteo API", "info"),
+        ("AI: Quantile P10-P90 & SHAP XAI", "warning"),
     ],
 )
+
 
 # 1. SEQUENTIAL ARCHITECTURE PIPELINE
 render_section_header(

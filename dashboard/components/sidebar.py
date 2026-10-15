@@ -16,7 +16,7 @@ def render_sidebar_controls() -> Dict[str, Any]:
             SmartGrid Bharat EMS
         </div>
         <div class="sidebar-brand-sub">
-            Microgrid Operations & Dispatch Console
+            Microgrid Operations &amp; Dispatch Console
         </div>
         <div class="sidebar-status-pill">
             <span style="width: 5px; height: 5px; border-radius: 50%; background-color: #10B981;"></span>
@@ -101,28 +101,75 @@ def render_sidebar_controls() -> Dict[str, Any]:
         index=3 if preset_dur == 168 else (0 if preset_dur == 24 else (1 if preset_dur == 48 else 2)),
     )
 
-    # Active DISCOM Tariff Summary Box
-    render_sidebar_html("""
-    <div style="margin-top: 14px; padding: 10px 12px; background: var(--surface-base); border: 1px solid var(--border-subtle); border-radius: 4px;">
+    # ── Feature 2: Interactive State DISCOM Tariff Presets ─────────────────
+    render_sidebar_html('<div class="sidebar-section-divider">State DISCOM Tariff Schedule</div>')
+
+    # Preset definitions: (peak, normal, night, export) in ₹/kWh
+    DISCOM_PRESETS = {
+        "Standard (Benchmark ToD)":  (12.00, 7.50, 4.50, 3.50),
+        "MSEDCL (Maharashtra)":      (13.50, 8.20, 4.20, 3.80),
+        "BESCOM (Karnataka)":        (11.80, 7.80, 5.00, 3.50),
+        "TANGEDCO (Tamil Nadu)":     (10.50, 6.90, 4.80, 3.20),
+        "Tata Power / BSES (Delhi)": (12.50, 7.20, 4.00, 3.60),
+        "KSEB (Kerala)":             (9.50,  6.50, 4.50, 3.00),
+        "Custom Rates":              (12.00, 7.50, 4.50, 3.50),
+    }
+
+    discom_choice = st.sidebar.selectbox(
+        "DISCOM Tariff Preset",
+        options=list(DISCOM_PRESETS.keys()),
+        index=0,
+        label_visibility="collapsed",
+        help="Select a real Indian state DISCOM tariff schedule or configure custom rates.",
+    )
+
+    preset_peak, preset_normal, preset_night, preset_export = DISCOM_PRESETS[discom_choice]
+
+    if discom_choice == "Custom Rates":
+        tariff_peak = st.sidebar.slider(
+            "Peak Rate (18–22h) ₹/kWh",
+            min_value=5.0, max_value=20.0, value=preset_peak, step=0.25,
+            help="Grid import tariff during evening peak hours.",
+        )
+        tariff_normal = st.sidebar.slider(
+            "Normal Rate (06–18h) ₹/kWh",
+            min_value=3.0, max_value=15.0, value=preset_normal, step=0.25,
+        )
+        tariff_night = st.sidebar.slider(
+            "Off-Peak Rate (22–06h) ₹/kWh",
+            min_value=1.0, max_value=10.0, value=preset_night, step=0.25,
+        )
+        tariff_export = st.sidebar.slider(
+            "Solar Export / Feed-In ₹/kWh",
+            min_value=1.0, max_value=8.0, value=preset_export, step=0.25,
+        )
+    else:
+        tariff_peak, tariff_normal, tariff_night, tariff_export = (
+            preset_peak, preset_normal, preset_night, preset_export
+        )
+
+    # Live tariff summary box — updated dynamically with selected rates
+    render_sidebar_html(f"""
+    <div style="margin-top: 10px; padding: 10px 12px; background: var(--surface-base); border: 1px solid var(--border-subtle); border-radius: 4px;">
         <div style="font-size: 0.6875rem; font-weight: 600; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;">
-            State DISCOM ToD Tariffs
+            {discom_choice} — Active Rates
         </div>
         <div style="display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.70rem;">
             <div style="display: flex; justify-content: space-between; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.04);">
                 <span style="color: #94A3B8;">Peak (18-22h)</span>
-                <span style="color: #F87171; font-weight: 600;">₹12.00 / Unit</span>
+                <span style="color: #F87171; font-weight: 600;">&#8377;{tariff_peak:.2f} / Unit</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.04);">
                 <span style="color: #94A3B8;">Normal (06-18h)</span>
-                <span style="color: #38BDF8; font-weight: 600;">₹7.50 / Unit</span>
+                <span style="color: #38BDF8; font-weight: 600;">&#8377;{tariff_normal:.2f} / Unit</span>
             </div>
             <div style="display: flex; justify-content: space-between; padding-bottom: 3px; border-bottom: 1px solid rgba(255,255,255,0.04);">
                 <span style="color: #94A3B8;">Night (22-06h)</span>
-                <span style="color: #34D399; font-weight: 600;">₹4.50 / Unit</span>
+                <span style="color: #34D399; font-weight: 600;">&#8377;{tariff_night:.2f} / Unit</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span style="color: #94A3B8;">Solar Export</span>
-                <span style="color: #FBBF24; font-weight: 600;">₹3.50 / Unit</span>
+                <span style="color: #FBBF24; font-weight: 600;">&#8377;{tariff_export:.2f} / Unit</span>
             </div>
         </div>
     </div>
@@ -137,4 +184,10 @@ def render_sidebar_controls() -> Dict[str, Any]:
         "efficiency": 0.95,
         "sim_duration_hours": sim_duration,
         "scenario_preset": scenario_preset,
+        # Feature 2: Active tariff rates (₹/kWh) from selected DISCOM preset
+        "tariff_peak_inr": tariff_peak,
+        "tariff_normal_inr": tariff_normal,
+        "tariff_night_inr": tariff_night,
+        "tariff_export_inr": tariff_export,
+        "discom_name": discom_choice,
     }

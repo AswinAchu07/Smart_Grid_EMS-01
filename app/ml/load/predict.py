@@ -43,3 +43,11 @@ class LoadForecastingInference:
         if self.forecaster is None or not self.forecaster.is_fitted:
             self.load_model()
         return self.forecaster.predict(feature_df)
+
+    @property
+    def model(self):
+        """Underlying trained scikit-learn or XGBoost model instance."""
+        if self.forecaster is None or not self.forecaster.is_fitted:
+            self.load_model()
+        return getattr(self.forecaster, "model", self.forecaster)
+

@@ -1,7 +1,7 @@
 """Physics-based Battery Energy Storage System (BESS) state simulation model.
 """
 
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional, List
 from app.battery.constraints import BatteryConstraints
 
 
@@ -18,6 +18,7 @@ class Battery:
         max_discharge_power_kw: float = 5.0,
         charge_efficiency: float = 0.95,
         discharge_efficiency: float = 0.95,
+        initial_soh: float = 1.0,
     ):
         BatteryConstraints.validate_config(
             capacity_kwh=capacity_kwh,
@@ -39,8 +40,11 @@ class Battery:
 
         # Initial SOC initialization bounded within limits
         self.soc = float(min(max(initial_soc, self.min_soc), self.max_soc))
+        self.soh = float(min(1.0, max(0.0, initial_soh)))
         self.total_charged_kwh: float = 0.0
         self.total_discharged_kwh: float = 0.0
+        self.soc_history: list[float] = [self.soc]
+
 
     @property
     def stored_energy_kwh(self) -> float:
@@ -104,13 +108,38 @@ class Battery:
 
         self.total_charged_kwh += actual_ch * dt_hours
         self.total_discharged_kwh += actual_dis * dt_hours
+        self.soc_history.append(self.soc)
 
         return actual_ch, actual_dis, self.soc
+
+    def evaluate_degradation(
+        self,
+        dt_hours: float = 1.0,
+        temp_celsius: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Compute ASTM E1049-85 Rainflow & physics degradation assessment over accumulated history."""
+        from app.battery.degradation import BatteryDegradationModel
+
+        model = BatteryDegradationModel(
+            nominal_capacity_kwh=self.capacity_kwh,
+            ambient_temp_celsius=25.0 if temp_celsius is None else temp_celsius,
+        )
+        report = model.evaluate_soc_trajectory(
+            soc_trajectory=self.soc_history,
+            dt_hours=dt_hours,
+            initial_soh=self.soh,
+            temp_celsius=temp_celsius,
+        )
+        self.soh = report["final_soh"]
+        return report
 
     def get_status(self) -> Dict[str, Any]:
         """Return comprehensive telemetry snapshot of the battery."""
         return {
             "capacity_kwh": self.capacity_kwh,
+            "soh": round(self.soh, 4),
+            "soh_pct": round(self.soh * 100.0, 2),
+            "effective_capacity_kwh": round(self.capacity_kwh * self.soh, 3),
             "soc": round(self.soc, 4),
             "soc_pct": round(self.soc * 100.0, 2),
             "stored_energy_kwh": round(self.stored_energy_kwh, 3),
@@ -124,3 +153,4 @@ class Battery:
             "total_discharged_kwh": round(self.total_discharged_kwh, 3),
             "equivalent_cycles": round(self.total_discharged_kwh / max(1.0, self.capacity_kwh), 2),
         }
+

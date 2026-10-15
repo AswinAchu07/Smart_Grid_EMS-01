@@ -22,6 +22,8 @@ from app.api.v1.optimization import router as optimization_router
 from app.api.v1.simulation import router as simulation_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.health import router as health_router
+from app.api.v1.weather import router as weather_router
+
 
 
 @asynccontextmanager
@@ -110,6 +112,8 @@ app.include_router(ems_router, prefix=settings.API_V1_STR)
 app.include_router(optimization_router, prefix=settings.API_V1_STR)
 app.include_router(simulation_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
+app.include_router(weather_router, prefix=settings.API_V1_STR)
+
 
 
 @app.get("/", include_in_schema=False)
