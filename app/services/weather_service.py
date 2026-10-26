@@ -12,16 +12,20 @@ _WEATHER_CACHE: Dict[str, Any] = {}
 CACHE_TTL_SECONDS = 600.0  # 10 minutes
 
 PRESET_CITIES = [
-    {"name": "New Delhi", "country": "India", "latitude": 28.6139, "longitude": 77.2090, "timezone": "Asia/Kolkata"},
-    {"name": "Bengaluru", "country": "India", "latitude": 12.9716, "longitude": 77.5946, "timezone": "Asia/Kolkata"},
-    {"name": "Mumbai", "country": "India", "latitude": 19.0760, "longitude": 72.8777, "timezone": "Asia/Kolkata"},
-    {"name": "Chennai", "country": "India", "latitude": 13.0827, "longitude": 80.2707, "timezone": "Asia/Kolkata"},
-    {"name": "San Francisco", "country": "USA", "latitude": 37.7749, "longitude": -122.4194, "timezone": "America/Los_Angeles"},
-    {"name": "Berlin", "country": "Germany", "latitude": 52.5200, "longitude": 13.4050, "timezone": "Europe/Berlin"},
-    {"name": "London", "country": "UK", "latitude": 51.5074, "longitude": -0.1278, "timezone": "Europe/London"},
-    {"name": "Tokyo", "country": "Japan", "latitude": 35.6762, "longitude": 139.6503, "timezone": "Asia/Tokyo"},
-    {"name": "Sydney", "country": "Australia", "latitude": -33.8688, "longitude": 151.2093, "timezone": "Australia/Sydney"},
-    {"name": "Cairo", "country": "Egypt", "latitude": 30.0444, "longitude": 31.2357, "timezone": "Africa/Cairo"},
+    {"name": "Kochi (Cochin)", "region": "Kerala", "country": "India", "latitude": 9.9312, "longitude": 76.2673, "timezone": "Asia/Kolkata", "desc": "Commercial Metropolis & Industrial Port (KSEB Hub)"},
+    {"name": "Thiruvananthapuram", "region": "Kerala", "country": "India", "latitude": 8.5241, "longitude": 76.9366, "timezone": "Asia/Kolkata", "desc": "State Capital & Technopark IT Hub"},
+    {"name": "Kozhikode (Calicut)", "region": "Kerala", "country": "India", "latitude": 11.2588, "longitude": 75.7804, "timezone": "Asia/Kolkata", "desc": "Northern Malabar Commercial Capital"},
+    {"name": "Thrissur (Trichur)", "region": "Kerala", "country": "India", "latitude": 10.5276, "longitude": 76.2144, "timezone": "Asia/Kolkata", "desc": "Cultural & Banking Capital (Central Kerala)"},
+    {"name": "Kollam (Quilon)", "region": "Kerala", "country": "India", "latitude": 8.8932, "longitude": 76.6141, "timezone": "Asia/Kolkata", "desc": "Southern Industrial Port & Cashew Hub"},
+    {"name": "Palakkad", "region": "Kerala", "country": "India", "latitude": 10.7867, "longitude": 76.6548, "timezone": "Asia/Kolkata", "desc": "Industrial Corridor (Highest Solar Insolation in Kerala)"},
+    {"name": "Kannur", "region": "Kerala", "country": "India", "latitude": 11.8745, "longitude": 75.3704, "timezone": "Asia/Kolkata", "desc": "Northern Coastal Commercial Center"},
+    {"name": "Alappuzha (Alleppey)", "region": "Kerala", "country": "India", "latitude": 9.4981, "longitude": 76.3388, "timezone": "Asia/Kolkata", "desc": "Coastal Tourism & Rooftop Microgrids"},
+    {"name": "Kottayam", "region": "Kerala", "country": "India", "latitude": 9.5916, "longitude": 76.5222, "timezone": "Asia/Kolkata", "desc": "Central Commercial & Agricultural Center"},
+    {"name": "Malappuram", "region": "Kerala", "country": "India", "latitude": 11.0510, "longitude": 76.0711, "timezone": "Asia/Kolkata", "desc": "Populous Northern District Center"},
+    {"name": "Bengaluru", "region": "Karnataka", "country": "India", "latitude": 12.9716, "longitude": 77.5946, "timezone": "Asia/Kolkata", "desc": "Southern Regional Tech Benchmark"},
+    {"name": "Chennai", "region": "Tamil Nadu", "country": "India", "latitude": 13.0827, "longitude": 80.2707, "timezone": "Asia/Kolkata", "desc": "East Coast Maritime Benchmark"},
+    {"name": "Mumbai", "region": "Maharashtra", "country": "India", "latitude": 19.0760, "longitude": 72.8777, "timezone": "Asia/Kolkata", "desc": "West Coast Metro Benchmark"},
+    {"name": "New Delhi", "region": "NCR", "country": "India", "latitude": 28.6139, "longitude": 77.2090, "timezone": "Asia/Kolkata", "desc": "National Capital Grid Benchmark"},
 ]
 
 
@@ -84,19 +88,28 @@ class WeatherService:
             hr = (int(time.strftime("%H", time.gmtime(t_sec))) + int(longitude / 15.0)) % 24
 
             times.append(iso_time)
-            # Temperature curve: diurnal peak at 14:00
-            base_temp = 22.0 + 8.0 * math.sin(math.pi * (hr - 8.0) / 12.0)
-            temperatures.append(round(base_temp, 1))
+            # Detect Kerala regional latitude/longitude bounds (8.0°N to 12.8°N, 74.5°E to 77.8°E)
+            is_kerala = (8.0 <= latitude <= 12.8) and (74.5 <= longitude <= 77.8)
 
-            # Cloud cover
-            cloud = 20.0 + 15.0 * math.cos(i / 12.0)
+            if is_kerala:
+                # Coastal tropical Kerala diurnal pattern: warm humid nights (25.5°C) to tropical afternoon (32.5°C)
+                base_temp = 25.5 + 7.0 * math.sin(math.pi * (hr - 8.0) / 12.0)
+                # Typical tropical coastal maritime cloud cover with afternoon convective buildup
+                cloud = 28.0 + 22.0 * math.sin(math.pi * (hr - 10.0) / 10.0) if 10 <= hr <= 18 else 20.0
+            else:
+                # Standard temperate / continental pattern
+                base_temp = 22.0 + 8.0 * math.sin(math.pi * (hr - 8.0) / 12.0)
+                cloud = 20.0 + 15.0 * math.cos(i / 12.0)
+
+            temperatures.append(round(base_temp, 1))
             clouds.append(round(max(0.0, min(100.0, cloud)), 1))
 
             # Solar GHI clear sky with cloud attenuation
             if 6 <= hr <= 19:
                 solar_angle = math.sin(math.pi * (hr - 6.0) / 13.0)
-                clear_ghi = 950.0 * (solar_angle ** 1.1)
-                attenuation = 1.0 - 0.75 * ((cloud / 100.0) ** 3)
+                peak_ghi = 960.0 if is_kerala else 950.0
+                clear_ghi = peak_ghi * (solar_angle ** 1.1)
+                attenuation = 1.0 - 0.70 * ((cloud / 100.0) ** 2.5)
                 ghi = max(0.0, clear_ghi * attenuation)
             else:
                 ghi = 0.0

@@ -33,7 +33,7 @@ from dashboard.components.metrics_cards import (
     format_inr,
 )
 from dashboard.components.topology import render_power_topology_diagram
-from dashboard.components.charts import plot_energy_flow_stacked
+from dashboard.components.charts import plot_energy_flow_stacked, PLOTLY_CONFIG
 
 # Page configuration
 st.set_page_config(
@@ -142,6 +142,7 @@ sim_records_df = pd.DataFrame([r.model_dump() for r in sim_res.records])
 st.plotly_chart(
     plot_energy_flow_stacked(sim_records_df, title=f"Power Dispatch Breakdown ({sidebar_params['sim_duration_hours']} Hours)"),
     use_container_width=True,
+    config=PLOTLY_CONFIG,
 )
 
 # 4. SUBSYSTEM DIRECTORY (Differentiated Structured Layout)

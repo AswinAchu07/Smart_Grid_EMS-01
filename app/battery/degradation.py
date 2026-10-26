@@ -12,6 +12,7 @@ import math
 import numpy as np
 
 try:
+    # pyrefly: ignore [missing-import]
     import rainflow
     HAS_RAINFLOW = True
 except ImportError:
@@ -256,3 +257,64 @@ class BatteryDegradationModel:
             "mean_soc_pct": round(mean_soc * 100.0, 1),
             "duration_hours": duration_hours,
         }
+
+    def calculate_arrhenius_factor(self, temp_celsius: Optional[float] = None) -> float:
+        """Arrhenius thermal reaction rate acceleration factor relative to 25°C standard."""
+        t_c = self.ambient_temp_celsius if temp_celsius is None else temp_celsius
+        t_kelvin = t_c + 273.15
+        t_ref_kelvin = 298.15  # 25°C
+        return float(math.exp(3788.0 * (1.0 / t_ref_kelvin - 1.0 / t_kelvin)))
+
+    def project_soh_trajectory(
+        self,
+        years: float = 15.0,
+        temp_celsius: Optional[float] = None,
+        daily_equivalent_cycles: float = 1.0,
+        mean_soc: float = 0.50,
+    ) -> Dict[str, Any]:
+        """Project multi-year SOH retention trajectory under the specified operating temperature.
+
+        Returns year-by-year SOH comparing active operating temperature against 25°C standard baseline,
+        and identifies the exact year when SOH crosses the 80% EOL retirement threshold.
+        """
+        arr_factor = self.calculate_arrhenius_factor(temp_celsius)
+        soc_factor = math.exp(0.8 * (max(0.0, min(1.0, mean_soc)) - 0.5))
+
+        # Nominal calendar fade: ~2.0% per year at 25°C, accelerated by Arrhenius kinetics
+        annual_calendar_loss = 0.020 * arr_factor * soc_factor
+
+        # Nominal cyclic fatigue: 1 full cycle per day on 4000-cycle LFP battery -> ~1.825% per year
+        annual_cyclic_loss = (daily_equivalent_cycles * 365.0 / max(1.0, self.nominal_cycles_80dod)) * (1.0 - self.eol_soh_threshold)
+        annual_total_loss = annual_calendar_loss + annual_cyclic_loss
+
+        # Baseline at 25°C standard condition
+        annual_loss_25c = 0.020 * 1.0 * soc_factor + annual_cyclic_loss
+
+        year_steps = [round(float(y), 2) for y in np.linspace(0.0, years, int(years * 4) + 1)]
+        soh_curve = []
+        soh_curve_base_25c = []
+
+        eol_year = None
+        eol_year_25c = None
+
+        for y in year_steps:
+            s = max(0.50, 1.0 - y * annual_total_loss)
+            s_25 = max(0.50, 1.0 - y * annual_loss_25c)
+            soh_curve.append(round(s * 100.0, 2))
+            soh_curve_base_25c.append(round(s_25 * 100.0, 2))
+
+            if s <= self.eol_soh_threshold and eol_year is None:
+                eol_year = y
+            if s_25 <= self.eol_soh_threshold and eol_year_25c is None:
+                eol_year_25c = y
+
+        return {
+            "years": year_steps,
+            "soh_pct": soh_curve,
+            "soh_pct_base_25c": soh_curve_base_25c,
+            "annual_loss_pct": round(annual_total_loss * 100.0, 2),
+            "arrhenius_factor": round(arr_factor, 2),
+            "eol_year": round(float(eol_year), 1) if eol_year else float(years),
+            "eol_year_25c": round(float(eol_year_25c), 1) if eol_year_25c else float(years),
+        }
+

@@ -17,7 +17,11 @@ import streamlit as st
 import pandas as pd
 from app.services.analytics_service import AnalyticsService
 from dashboard.components.sidebar import render_sidebar_controls
-from dashboard.components.charts import plot_strategy_cost_comparison, plot_roi_payback_curve
+from dashboard.components.charts import (
+    plot_strategy_cost_comparison,
+    plot_roi_payback_curve,
+    PLOTLY_CONFIG,
+)
 from dashboard.components.metrics_cards import (
     render_kpi_card,
     render_strategy_comparison_cards,
@@ -91,6 +95,7 @@ render_section_header(
 st.plotly_chart(
     plot_strategy_cost_comparison(comp.model_dump()),
     use_container_width=True,
+    config=PLOTLY_CONFIG,
 )
 
 # 3. DETAILED PERFORMANCE MATRIX TABLE
@@ -227,6 +232,7 @@ st.plotly_chart(
         annual_savings_inr=est_annual_savings_inr,
     ),
     use_container_width=True,
+    config=PLOTLY_CONFIG,
 )
 
 # 5. DATA EXPORT ACTION

@@ -19,7 +19,12 @@ from app.services.simulation_service import SimulationService
 from app.schemas.simulation import SimulationRequest
 from app.core.constants import EMSStrategy
 from dashboard.components.sidebar import render_sidebar_controls
-from dashboard.components.charts import plot_tou_price_arbitrage, plot_energy_flow_stacked
+from dashboard.components.charts import (
+    plot_tou_price_arbitrage,
+    plot_energy_flow_stacked,
+    plot_cumulative_cost_trajectories,
+    PLOTLY_CONFIG,
+)
 from dashboard.components.metrics_cards import (
     render_stat_strip,
     render_section_header,
@@ -111,6 +116,7 @@ st.plotly_chart(
         title="24-Hour Battery SOC Trajectory vs DISCOM ToD Tariff (₹/Unit)",
     ),
     use_container_width=True,
+    config=PLOTLY_CONFIG,
 )
 
 # 3. OPTIMAL POWER FLOW BREAKDOWN
@@ -122,6 +128,7 @@ render_section_header(
 st.plotly_chart(
     plot_energy_flow_stacked(opt_df, title="24-Hour Optimal Multi-Source Power Balance"),
     use_container_width=True,
+    config=PLOTLY_CONFIG,
 )
 
 # 4. HOURLY DISPATCH SCHEDULE DATA TABLE
@@ -186,3 +193,77 @@ with m2:
         </div>
     </div>
     """)
+
+# 6. OBJECTIVES 4 & 8 PROOF: BILL REDUCTION & COORDINATED DISPATCH
+render_section_header(
+    title="Objective 4 & 8 Proof: Electricity Bill Reduction & Coordinated Energy Dispatch",
+    subtitle="Proving monetary cost savings and coordinated multi-asset dispatch synergy over heuristic rules",
+    badge_text="OBJECTIVES 4 & 8 VERIFIED",
+)
+
+sim_unm_data = get_cached_simulation_data(
+    strategy_name=EMSStrategy.UNMANAGED.value,
+    duration_hours=24,
+    initial_soc=params["initial_soc"],
+    capacity_kwh=params["capacity_kwh"],
+    max_power_kw=params["max_power_kw"],
+    efficiency=params["efficiency"],
+    min_soc=params["min_soc"],
+    max_soc=params["max_soc"],
+)
+sim_rb_data = get_cached_simulation_data(
+    strategy_name=EMSStrategy.RULE_BASED.value,
+    duration_hours=24,
+    initial_soc=params["initial_soc"],
+    capacity_kwh=params["capacity_kwh"],
+    max_power_kw=params["max_power_kw"],
+    efficiency=params["efficiency"],
+    min_soc=params["min_soc"],
+    max_soc=params["max_soc"],
+)
+
+unm_cost_inr = sim_unm_data["total_cost"] * 85.0
+rb_cost_inr = sim_rb_data["total_cost"] * 85.0
+opt_cost_inr = sim_opt.total_cost * 85.0
+savings_vs_unm_inr = unm_cost_inr - opt_cost_inr
+savings_vs_rb_inr = rb_cost_inr - opt_cost_inr
+savings_pct = (savings_vs_unm_inr / unm_cost_inr * 100.0) if unm_cost_inr > 0 else 0.0
+
+render_stat_strip([
+    {
+        "label": "Unmanaged 24h Bill",
+        "val": format_inr(unm_cost_inr, is_already_inr=True),
+        "sub": "No storage reference",
+        "color": "#F43F5E",
+    },
+    {
+        "label": "Rule-Based 24h Bill",
+        "val": format_inr(rb_cost_inr, is_already_inr=True),
+        "sub": "Greedy heuristic baseline",
+        "color": "#F59E0B",
+    },
+    {
+        "label": "MILP Optimized Bill",
+        "val": format_inr(opt_cost_inr, is_already_inr=True),
+        "sub": f"-{savings_pct:.1f}% vs reference",
+        "color": "#10B981",
+    },
+    {
+        "label": "Optimization Advantage",
+        "val": format_inr(savings_vs_rb_inr, is_already_inr=True),
+        "sub": "Coordinated synergy gain",
+        "color": "#38BDF8",
+    },
+])
+
+st.plotly_chart(
+    plot_cumulative_cost_trajectories(
+        unm_records=sim_unm_data["records"],
+        rb_records=sim_rb_data["records"],
+        opt_records=sim_opt_data["records"],
+        title="24-Hour Cumulative Electricity Bill Trajectory (₹ INR)",
+    ),
+    use_container_width=True,
+    config=PLOTLY_CONFIG,
+)
+

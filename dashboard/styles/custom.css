@@ -815,3 +815,18 @@ code, pre {
         font-size: 1.45rem;
     }
 }
+
+/* ==========================================================================
+   Smooth Page Scrolling Over Plotly Charts
+   Allows natural vertical scrolling on mousewheel, trackpad, and touch devices
+   without capturing gesture unless zoom tool is actively selected
+   ========================================================================== */
+.stPlotlyChart,
+div[data-testid="stPlotlyChart"],
+.js-plotly-plot,
+.js-plotly-plot .plotly,
+.js-plotly-plot .plotly .draglayer,
+.js-plotly-plot .plotly .nsewdrag {
+    touch-action: pan-y !important;
+}
+

@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 try:
+    # pyrefly: ignore [missing-import]
     import shap
     HAS_SHAP = True
 except ImportError:

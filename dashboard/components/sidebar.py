@@ -29,11 +29,12 @@ def render_sidebar_controls() -> Dict[str, Any]:
     scenario_preset = st.sidebar.selectbox(
         "Operating Scenario",
         options=[
-            "National Grid Benchmark (Standard ToD)",
+            "Kerala Coastal Microgrid (Kochi/Ernakulam - High Humidity & Rooftop PV)",
+            "Kerala Southwest Monsoon (Thiruvananthapuram - Heavy Attenuation & Grid Firming)",
+            "Kerala Palakkad Gap Solar Corridor (High Insolation & ToD Optimization)",
+            "KSEB ToD Tariff Arbitrage (Kerala State Electricity Board Peak 18:00-22:00)",
+            "National Grid Benchmark (Standard CEA/CERC ToD)",
             "North India Summer Heatwave (High Solar & AC Load)",
-            "Monsoon Low-Irradiance & High Humidity (Mumbai/Kerala)",
-            "Winter Morning Smog & Ag-Pumping (NCR/Punjab)",
-            "State DISCOM High-ToD Peak Arbitrage (MSEDCL/BESCOM)",
             "DISCOM Scheduled Load-Shedding (Islanding Backup)",
         ],
         index=0,
@@ -46,21 +47,31 @@ def render_sidebar_controls() -> Dict[str, Any]:
     preset_pwr = 5.0
     preset_dur = 168
 
-    if "Summer Heatwave" in scenario_preset:
+    if "Kerala Coastal" in scenario_preset:
+        preset_cap = 10.0
+        preset_soc = 65
+        preset_pwr = 5.0
+        preset_dur = 48
+    elif "Kerala Southwest Monsoon" in scenario_preset:
+        preset_cap = 12.0
+        preset_soc = 85
+        preset_pwr = 5.0
+        preset_dur = 72
+    elif "Kerala Palakkad" in scenario_preset:
+        preset_cap = 15.0
+        preset_soc = 50
+        preset_pwr = 7.5
+        preset_dur = 48
+    elif "KSEB ToD" in scenario_preset:
+        preset_cap = 15.0
+        preset_soc = 90
+        preset_pwr = 6.0
+        preset_dur = 24
+    elif "Summer Heatwave" in scenario_preset:
         preset_cap = 15.0
         preset_soc = 40
         preset_pwr = 7.5
         preset_dur = 72
-    elif "Monsoon" in scenario_preset:
-        preset_cap = 10.0
-        preset_soc = 80
-        preset_pwr = 5.0
-        preset_dur = 72
-    elif "High-ToD" in scenario_preset:
-        preset_cap = 20.0
-        preset_soc = 90
-        preset_pwr = 10.0
-        preset_dur = 24
     elif "Load-Shedding" in scenario_preset:
         preset_cap = 12.0
         preset_soc = 95
