@@ -17,33 +17,33 @@ A Python-first **B.Tech Final-Year Capstone Project** in Smart Grid, Solar PV Ge
 ```mermaid
 graph TD
     subgraph Data Layer
-        DS[Synthetic Generator / Historical CSV] --> DI[Data Ingestion & Cleaning]
-        DI --> FE[Feature Engineering: Cyclic Sin/Cos, Lags, Rolling Stats]
+        DS["Synthetic Generator / Historical CSV"] --> DI["Data Ingestion & Cleaning"]
+        DI --> FE["Feature Engineering: Cyclic Sin/Cos, Lags, Rolling Stats"]
     end
 
     subgraph Machine Learning Layer
-        FE --> SF[Solar Forecaster<br/>Baseline | Ridge | RF | XGBoost]
-        FE --> LF[Load Forecaster<br/>Baseline | Ridge | RF | XGBoost]
+        FE --> SF["Solar Forecaster<br/>Baseline | Ridge | RF | XGBoost"]
+        FE --> LF["Load Forecaster<br/>Baseline | Ridge | RF | XGBoost"]
     end
 
     subgraph Physical Systems & Constraints
-        SF & LF --> EMS_CTRL[EMS Controller]
-        BAT[10 kWh Li-ion Battery Model<br/>SOC: 15% - 95%, Eff: 95%] <--> EMS_CTRL
+        SF & LF --> EMS_CTRL["EMS Controller"]
+        BAT["10 kWh Li-ion Battery Model<br/>SOC: 15% - 95%, Eff: 95%"] <--> EMS_CTRL
         
-        EMS_CTRL --> RB_EMS[Rule-Based Heuristic EMS]
-        EMS_CTRL --> OPT_EMS[MILP Optimization EMS<br/>PuLP Cost Minimizer]
+        EMS_CTRL --> RB_EMS["Rule-Based Heuristic EMS"]
+        EMS_CTRL --> OPT_EMS["MILP Optimization EMS<br/>PuLP Cost Minimizer"]
     end
 
     subgraph Simulation & Evaluation
-        RB_EMS & OPT_EMS --> SIM[Simulation Engine]
-        SIM --> EVAL[Evaluator: Savings, Self-Consumption, Peak Shaving]
+        RB_EMS & OPT_EMS --> SIM["Simulation Engine"]
+        SIM --> EVAL["Evaluator: Savings, Self-Consumption, Peak Shaving"]
     end
 
     subgraph Presentation & API Layer
-        DB[(PostgreSQL / SQLite Database)] <--> API[FastAPI Backend + JWT RBAC]
+        DB[("PostgreSQL / SQLite Database")] <--> API["FastAPI Backend + JWT RBAC"]
         SIM --> API
         EVAL --> API
-        API <--> DASH[Streamlit + Plotly Interactive UI]
+        API <--> DASH["Streamlit + Plotly Interactive UI"]
     end
 ```
 
